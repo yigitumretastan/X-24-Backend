@@ -23,7 +23,7 @@ import { WorkspaceModule } from './workspace/workspace.module';
     }),
     MongooseModule.forRoot(
       process.env.MONGO_URI ||
-        'mongodb+srv://tastanyigitumre:AqdWdNFUt4yJnEnl@x24-api.ehv8ibp.mongodb.net/?retryWrites=true&w=majority&appName=X24-Api',
+        'mongodb+srv://',
     ),
     AnalyticsModule,
     AuthModule,
