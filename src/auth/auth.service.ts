@@ -60,7 +60,7 @@ export class AuthService {
         email: dto.email,
         phone: dto.phone,
         password: hashedPassword,
-        workspace: workspace._id.toString(),
+        workspace: (workspace._id as Types.ObjectId).toString(), // <--- Burada cast eklendi
         role,
         inviteCode: dto.inviteCode,
         companyName: dto.companyName,
@@ -69,11 +69,14 @@ export class AuthService {
       const user = await this.usersService.create(userData);
 
       if (!workspace.ownerId || workspace.ownerId === 'temporary-owner-id') {
-        workspace.ownerId = user._id.toString();
+        workspace.ownerId = (user._id as Types.ObjectId).toString(); // <--- Cast burada da eklendi
         await workspace.save();
       }
 
-      await this.workspaceService.addMember(workspace._id.toString(), user._id.toString());
+      await this.workspaceService.addMember(
+        (workspace._id as Types.ObjectId).toString(),
+        (user._id as Types.ObjectId).toString(),
+      );
 
       const tokenData = this._signToken(user, '1d');
 
@@ -144,15 +147,18 @@ export class AuthService {
           phone: '',
           password: '',
           provider: 'google',
-          workspace: workspace._id.toString(),
+          workspace: (workspace._id as Types.ObjectId).toString(),
           role: 'SuperAdmin',
         };
 
         user = await this.usersService.create(userData);
-        workspace.ownerId = user._id.toString();
+        workspace.ownerId = (user._id as Types.ObjectId).toString(); 
         await workspace.save();
 
-        await this.workspaceService.addMember(workspace._id.toString(), user._id.toString());
+        await this.workspaceService.addMember(
+          (workspace._id as Types.ObjectId).toString(),
+          (user._id as Types.ObjectId).toString(),
+        );
       }
 
       return this._signToken(user, '7d');

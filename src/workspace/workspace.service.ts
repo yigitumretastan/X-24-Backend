@@ -16,7 +16,7 @@ export class WorkspaceService {
     return randomBytes(length).toString('hex');
   }
 
-  async create(dto: CreateWorkspaceDto) {
+  async create(dto: CreateWorkspaceDto): Promise<WorkspaceDocument> {
     if (!dto.name) throw new Error('Workspace name is required');
     if (!dto.ownerId) throw new Error('OwnerId is required');
 
@@ -31,27 +31,29 @@ export class WorkspaceService {
     return workspace.save();
   }
 
-  async findByInviteCode(code: string) {
-    return this.workspaceModel.findOne({ inviteCode: code });
+  async findByInviteCode(code: string): Promise<WorkspaceDocument | null> {
+    return this.workspaceModel.findOne({ inviteCode: code }).exec();
   }
 
-  async addMember(workspaceId: string, userId: string) {
-    return this.workspaceModel.findByIdAndUpdate(
-      workspaceId,
-      { $addToSet: { members: userId } },
-      { new: true },
-    );
+  async addMember(workspaceId: string, userId: string): Promise<WorkspaceDocument | null> {
+    return this.workspaceModel
+      .findByIdAndUpdate(
+        workspaceId,
+        { $addToSet: { members: userId } },
+        { new: true },
+      )
+      .exec();
   }
 
-  async findById(id: string) {
-    return this.workspaceModel.findById(id).populate('members');
+  async findById(id: string): Promise<WorkspaceDocument | null> {
+    return this.workspaceModel.findById(id).populate('members').exec();
   }
 
-  async findByUserId(userId: string) {
-    return this.workspaceModel.find({ members: userId });
+  async findByUserId(userId: string): Promise<WorkspaceDocument[]> {
+    return this.workspaceModel.find({ members: userId }).exec();
   }
 
-  async getAll() {
-    return this.workspaceModel.find();
+  async getAll(): Promise<WorkspaceDocument[]> {
+    return this.workspaceModel.find().exec();
   }
 }

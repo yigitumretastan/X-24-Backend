@@ -1,4 +1,4 @@
-    import {
+import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
@@ -27,11 +27,15 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   constructor(private readonly messagesService: MessagesService) {}
 
   handleConnection(client: Socket) {
-    console.log(`İstemci bağlandı: ${client.id}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🟢 Client connected: ${client.id}`);
+    }
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`İstemci ayrıldı: ${client.id}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🔴 Client disconnected: ${client.id}`);
+    }
   }
 
   @SubscribeMessage('sendMessage')
@@ -40,7 +44,14 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() client: Socket,
   ) {
     const message = await this.messagesService.create(createMessageDto);
-    this.server.emit('newMessage', message);
+
+    // Oda: workspace varsa ona yayın yap, yoksa birebir oda
+    const room = createMessageDto.workspace
+      ? `workspace_${createMessageDto.workspace}`
+      : this.getPrivateRoomName(createMessageDto.sender, createMessageDto.receiver);
+
+    this.server.to(room).emit('newMessage', message);
+
     return message;
   }
 
@@ -60,5 +71,9 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     client.leave(room);
     client.emit('leftRoom', room);
+  }
+
+  private getPrivateRoomName(user1: string, user2: string): string {
+    return ['private', user1, user2].sort().join('_');
   }
 }
