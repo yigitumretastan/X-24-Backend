@@ -20,4 +20,17 @@ export class WorkspaceController {
   async getByInviteCode(@Param('code') code: string) {
     return this.workspaceService.findByInviteCode(code);
   }
+
+  @Post(':id/members/:userId')
+  async addMember(
+    @Param('id') workspaceId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.workspaceService.addMember(workspaceId, userId);
+  }
+
+  @Get('user/:userId')
+  async getByUserId(@Param('userId') userId: string) {
+    return this.workspaceService.findByUserId(userId);
+  }
 }

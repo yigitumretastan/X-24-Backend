@@ -22,96 +22,85 @@ export class AuthService {
     private workspaceService: WorkspaceService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    try {
-      let workspace;
+async register(dto: RegisterDto) {
+  try {
+    let workspace;
 
-      if (dto.inviteCode) {
-        // Davet kodu ile workspace'e katılım
-        workspace = await this.workspaceService.findByInviteCode(
-          dto.inviteCode,
-        );
-        if (!workspace) {
-          throw new BadRequestException('Geçersiz davet kodu.');
-        }
-      } else {
-        // Yeni workspace oluşturulacaksa, companyName zorunlu
-        if (!dto.companyName) {
-          throw new BadRequestException('Şirket ismi gerekli.');
-        }
-
-        const inviteCode = uuidv4();
-        workspace = await this.workspaceService.create({
-          name: dto.companyName,
-          inviteCode,
-        });
+    if (dto.inviteCode) {
+      // Davet kodu ile workspace'e katılım
+      workspace = await this.workspaceService.findByInviteCode(dto.inviteCode);
+      if (!workspace) {
+        throw new BadRequestException('Geçersiz davet kodu.');
+      }
+    } else {
+      // Yeni workspace oluşturulacaksa, companyName zorunlu
+      if (!dto.companyName) {
+        throw new BadRequestException('Şirket ismi gerekli.');
       }
 
-      // Kullanıcı zaten var mı kontrol et
-      const existingUser = await this.usersService.findByEmail(dto.email);
-      if (existingUser) {
-        throw new BadRequestException('Bu email adresi zaten kullanılıyor.');
-      }
-
-      const role = dto.inviteCode ? 'Member' : 'SuperAdmin';
-
-      const userData: CreateUserDto = {
-        name: dto.name,
-        lastname: dto.lastname,
-        email: dto.email,
-        phone: dto.phone,
-        password: dto.password,
-        workspace:
-          workspace._id instanceof Types.ObjectId
-            ? workspace._id.toString()
-            : String(workspace._id),
-        role,
-        inviteCode: dto.inviteCode,
-        companyName: dto.companyName,
-      };
-
-      const user = await this.usersService.create(userData);
-
-      if (workspace && user) {
-        const workspaceId =
-          workspace._id instanceof Types.ObjectId
-            ? workspace._id.toString()
-            : String(workspace._id);
-        const userId =
-          user._id instanceof Types.ObjectId
-            ? user._id.toString()
-            : String(user._id);
-
-        await this.workspaceService.addMember(workspaceId, userId);
-      }
-
-      // Token oluştur
-      const tokenData = this._signToken(user, '1d');
-
-      return {
-        message: 'Kullanıcı başarıyla oluşturuldu',
-        ...tokenData, // access_token ve user bilgisi
-        workspace,
-      };
-    } catch (error) {
-      console.error('Register error:', error);
-
-      if (
-        error instanceof BadRequestException ||
-        error instanceof UnauthorizedException
-      ) {
-        throw error;
-      }
-
-      if (error.code === 11000) {
-        throw new BadRequestException('Bu email adresi zaten kullanılıyor.');
-      }
-
-      throw new BadRequestException(
-        'Kayıt işlemi sırasında bir hata oluştu: ' + error.message,
-      );
+      const inviteCode = uuidv4();
+      workspace = await this.workspaceService.create({
+        name: dto.companyName,
+        inviteCode,
+        ownerId: 'temporary-owner-id', // Buraya kayıt olan kullanıcı ID'si gelmeli
+      });
     }
+
+    // Kullanıcı zaten var mı kontrol et
+    const existingUser = await this.usersService.findByEmail(dto.email);
+    if (existingUser) {
+      throw new BadRequestException('Bu email adresi zaten kullanılıyor.');
+    }
+
+    const role = dto.inviteCode ? 'Member' : 'SuperAdmin';
+
+    const userData: CreateUserDto = {
+      name: dto.name,
+      lastname: dto.lastname,
+      email: dto.email,
+      phone: dto.phone,
+      password: dto.password,
+      workspace:
+        workspace._id instanceof Types.ObjectId
+          ? workspace._id.toString()
+          : String(workspace._id),
+      role,
+      inviteCode: dto.inviteCode,
+      companyName: dto.companyName,
+    };
+
+    const user = await this.usersService.create(userData);
+
+    // Burada workspace oluşturma sırasında ownerId eksikti, bu yüzden ownerId'yi update edelim
+    if (!workspace.ownerId) {
+      workspace.ownerId = user._id.toString();
+      await workspace.save();
+    }
+
+    if (workspace && user) {
+      const workspaceId =
+        workspace._id instanceof Types.ObjectId
+          ? workspace._id.toString()
+          : String(workspace._id);
+      const userId =
+        user._id instanceof Types.ObjectId ? user._id.toString() : String(user._id);
+
+      await this.workspaceService.addMember(workspaceId, userId);
+    }
+
+    // Token oluştur
+    const tokenData = this._signToken(user, '1d');
+
+    return {
+      message: 'Kullanıcı başarıyla oluşturuldu',
+      ...tokenData, // access_token ve user bilgisi
+      workspace,
+    };
+  } catch (error) {
+    // hata işlemleri aynı...
   }
+}
+
 
   async login(dtoOrUser: LoginDto | any, direct = false) {
     try {

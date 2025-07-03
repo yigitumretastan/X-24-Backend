@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CreateWorkspaceDto {
   @IsString()
@@ -6,5 +6,10 @@ export class CreateWorkspaceDto {
   name: string;
 
   @IsString()
-  inviteCode: string;
+  @IsOptional()
+  inviteCode?: string;
+
+  @IsString()
+  @IsOptional()  
+  ownerId?: string;
 }
