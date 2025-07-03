@@ -9,7 +9,6 @@ export enum MessageType {
   OTHER = 'other',
 }
 
-// Okunma durumu için opsiyonel olarak kullanılabilir, genelde mesaj yaratılırken gerekmez ama ekledim.
 class ReadStatusDto {
   @IsMongoId()
   user: string;

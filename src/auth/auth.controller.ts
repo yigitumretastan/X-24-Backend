@@ -37,8 +37,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { access_token, refresh_token } = await this.authService.login(dto);
-
-    // Güvenli çerez ayarları
+    
     res.cookie('refreshToken', refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

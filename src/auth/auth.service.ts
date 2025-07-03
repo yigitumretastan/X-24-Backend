@@ -60,7 +60,7 @@ export class AuthService {
         email: dto.email,
         phone: dto.phone,
         password: hashedPassword,
-        workspace: (workspace._id as Types.ObjectId).toString(), // <--- Burada cast eklendi
+        workspace: (workspace._id as Types.ObjectId).toString(),
         role,
         inviteCode: dto.inviteCode,
         companyName: dto.companyName,
@@ -69,7 +69,7 @@ export class AuthService {
       const user = await this.usersService.create(userData);
 
       if (!workspace.ownerId || workspace.ownerId === 'temporary-owner-id') {
-        workspace.ownerId = (user._id as Types.ObjectId).toString(); // <--- Cast burada da eklendi
+        workspace.ownerId = (user._id as Types.ObjectId).toString();
         await workspace.save();
       }
 

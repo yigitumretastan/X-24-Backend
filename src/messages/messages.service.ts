@@ -41,7 +41,7 @@ export class MessagesService {
       receivers: Array.isArray(message.receivers)
         ? (message.receivers
             .map((r) => this.toUserDto(r))
-            .filter((u): u is UserDto => u !== null)) // Type guard ile null filtreleme
+            .filter((u): u is UserDto => u !== null))
         : [],
       workspaceId: message.workspace.toString(),
       channel: message.channel || '',
