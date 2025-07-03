@@ -1,29 +1,56 @@
-import { IsString, IsNotEmpty, IsOptional, IsMongoId } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ArrayNotEmpty, IsMongoId, IsEnum, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export enum MessageType {
+  TEXT = 'text',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  FILE = 'file',
+  OTHER = 'other',
+}
+
+// Okunma durumu için opsiyonel olarak kullanılabilir, genelde mesaj yaratılırken gerekmez ama ekledim.
+class ReadStatusDto {
+  @IsMongoId()
+  user: string;
+
+  @IsOptional()
+  isRead?: boolean;
+
+  @IsOptional()
+  readAt?: Date;
+}
 
 export class CreateMessageDto {
-  @ApiProperty({ description: 'Mesaj içeriği' })
   @IsString()
   @IsNotEmpty()
   content: string;
 
-  @ApiProperty({ description: 'Gönderen kullanıcı ID' })
   @IsMongoId()
-  @IsNotEmpty()
   sender: string;
 
-  @ApiProperty({ description: 'Alıcı kullanıcı ID', required: false })
-  @IsOptional()
-  @IsMongoId()
-  receiver?: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsMongoId({ each: true })
+  receivers: string[];
 
-  @ApiProperty({ description: 'Workspace ID' })
   @IsMongoId()
-  @IsNotEmpty()
   workspace: string;
 
-  @ApiProperty({ description: 'Mesaj türü', required: false })
   @IsOptional()
   @IsString()
-  type?: string;
+  channel?: string;
+
+  @IsOptional()
+  @IsEnum(MessageType)
+  type?: MessageType;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReadStatusDto)
+  readStatus?: ReadStatusDto[];
+
+  @IsOptional()
+  metadata?: Record<string, any>;
 }
