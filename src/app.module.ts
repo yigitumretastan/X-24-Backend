@@ -10,7 +10,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './projects/projects.module';
-import { RolesModule } from './projects/roles/roles.module';
+import { RolesModule } from './roles/roles.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { UsersModule } from './users/users.module';
